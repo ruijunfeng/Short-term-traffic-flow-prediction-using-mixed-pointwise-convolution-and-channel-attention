@@ -2,18 +2,18 @@
 """
 Created on Tue Sep 19 19:37:31 2023
 
-@author: Administrator
+@author: Ruijun Feng
 """
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class conv3d_block(nn.Module):
+class Conv3dBlock(nn.Module):
     def __init__(self, in_planes, out_planes, kernel_size=3, 
                  stride=1, padding=1, dilation=1, groups=1,
                  relu=True, bn=True, bias=True):
-        super(conv3d_block, self).__init__()
+        super(Conv3dBlock, self).__init__()
         self.out_channels = out_planes
         self.conv = nn.Conv3d(in_planes, out_planes, kernel_size=kernel_size, 
                               stride=stride, padding=padding, dilation=dilation, 
@@ -21,7 +21,7 @@ class conv3d_block(nn.Module):
         self.bn = nn.BatchNorm3d(out_planes, eps=1e-5, momentum=0.1, 
                                  affine=True) if bn else None
         self.relu = nn.ReLU() if relu else None
-
+        
     def forward(self, x):
         x = self.conv(x)
         if self.bn is not None:
@@ -30,7 +30,7 @@ class conv3d_block(nn.Module):
             x = self.relu(x)
         return x
     
-class conv2d_block(conv3d_block):
+class Conv2dBlock(Conv3dBlock):
     def __init__(self, in_planes, out_planes, kernel_size, 
                  stride=1, padding=1, dilation=1, groups=1,
                  relu=True, bn=True, bias=True):
@@ -50,16 +50,13 @@ class Flatten(nn.Module):
 
 class ChannelGate(nn.Module):
     def __init__(self, gate_channels=None, reduction_ratio=4, pool_types=['max']):
-        '''
-        Parameters
-        ----------
-        gate_channels : int, optional
-            Number of filters in 3D convolution.
-        reduction_ratio : int, optional
-            Reduction ratio. The default is 4.
-        pool_types : list, optional
-            Pooling type. The default is ['max'].
-        '''
+        """Channel attention module.
+
+        Args:
+            gate_channels (_type_, optional): Number of filters in 3D convolution. Defaults to None.
+            reduction_ratio (int, optional): Reduction ratio of channels. Defaults to 4.
+            pool_types (list, optional): Pooling type. Defaults to ['max'].
+        """
         super(ChannelGate, self).__init__()
         self.planes = gate_channels
         self.mlp = nn.Sequential(
@@ -92,7 +89,7 @@ class ChannelGate(nn.Module):
         scale = scale.view(b, c, 1, 1, 1)
         return x * scale + x   
     
-class conv_channel_attention_3d(nn.Module):
+class CAMPConv_MC(nn.Module):
     def __init__(self, reduction_ratio=4, period_num=4, filter_num=64, block_num=3):
         '''
         Parameters
@@ -106,13 +103,13 @@ class conv_channel_attention_3d(nn.Module):
         block_num : int
             Number of blocks used in the backbone.
         '''
-        super(conv_channel_attention_3d, self).__init__()
-        self.input = conv3d_block(3, filter_num, kernel_size=1, stride=1, padding=0)                    # input block
-        self.net_3d = nn.ModuleList([conv3d_block(filter_num, filter_num, 3) for _ in range(block_num)])# backbone                                                                                                   
-        self.output_3d = conv3d_block(filter_num, 1, kernel_size=1, stride=1, padding=0)                # output block 3d (compress channel dim)
-        self.output_2d = conv2d_block(period_num, 1, kernel_size=1, stride=1, padding=0)                # output block 2d (compress temporal dim)
-        self.attn_input = ChannelGate(filter_num, reduction_ratio=reduction_ratio)
-        self.attns = nn.ModuleList([ChannelGate(filter_num, reduction_ratio=reduction_ratio) for _ in range(block_num)])
+        super(CAMPConv_MC, self).__init__()
+        self.input = Conv3dBlock(3, filter_num, kernel_size=1, stride=1, padding=0)                    # input block
+        self.attn_input = ChannelGate(filter_num, reduction_ratio=reduction_ratio)                     # channel attention for input block 
+        self.net_3d = nn.ModuleList([Conv3dBlock(filter_num, filter_num, 3) for _ in range(block_num)])# backbone                                                                                                   
+        self.attns = nn.ModuleList([ChannelGate(filter_num, reduction_ratio=reduction_ratio) for _ in range(block_num)]) # channel attention for backbone blocks
+        self.output_3d = Conv3dBlock(filter_num, 1, kernel_size=1, stride=1, padding=0)                # output block 3d (compress channel dim)
+        self.output_2d = Conv2dBlock(period_num, 1, kernel_size=1, stride=1, padding=0)                # output block 2d (compress temporal dim)
         
     def forward(self, x):
         out = self.attn_input(self.input(x)) # (B, 3, T, H, W) -> (B, C, T, H, W)
@@ -126,5 +123,5 @@ class conv_channel_attention_3d(nn.Module):
 
 if __name__ == '__main__':    
     x = torch.rand(size=(1, 3, 4, 42, 34)) # (B, C, T, H, W)
-    model = conv_channel_attention_3d()
+    model = CAMPConv_MC()
     pred = model(x)
