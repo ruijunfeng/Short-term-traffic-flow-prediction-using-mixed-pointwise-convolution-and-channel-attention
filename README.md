@@ -19,10 +19,10 @@ First, the spatiotemporal traffic raster data is converted into the proposed mul
 
 ## How to cite
 
-> If you find this work useful, please cite our paper:
+If you find this work useful, please cite our paper:
 
 ```bibtex
-@article{Feng2024Traffic,
+@article{feng2024campconvmc,
   title = {Learning traffic as videos: Short-term traffic flow prediction using mixed-pointwise convolution and channel attention mechanism},
   journal = {Expert Systems with Applications},
   volume = {240},
