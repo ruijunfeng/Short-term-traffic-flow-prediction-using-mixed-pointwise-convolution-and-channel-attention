@@ -18,15 +18,21 @@ Notice: The longitude_latitude.csv file contains the latitude and longitude of e
 First, the spatiotemporal traffic raster data is converted into the proposed multi-channel data structure with a shape of (B, 3, d, I, J), where B represents the batch size. Then, the input unit learns the periodic dependencies by mapping the multi-channel data structure into bigger output channels (B, C, d, I, J). Next, the backbone captures spatiotemporal correlations and channel inter-dependencies without downsampling the feature maps, which helps preserve more information. Finally, the output unit compresses the output channels into one and treats the 3D output feature map as a sequence of consecutive 2D feature maps (B, 1, d, I, J), the prediction of the next time interval is made by compressing d into a single 2D feature map (B, 1, I, J).
 
 ## How to cite
-@article{feng2024campconvmc,
+
+> If you find this work useful, please cite our paper:
+
+```bibtex
+@article{Feng2024Traffic,
   title = {Learning traffic as videos: Short-term traffic flow prediction using mixed-pointwise convolution and channel attention mechanism},
-  author = {Ruijun Feng and Mingzhou Chen and Yaqi Song},
   journal = {Expert Systems with Applications},
   volume = {240},
   pages = {122468},
   year = {2024},
   issn = {0957-4174},
-  doi = {10.1016/j.eswa.2023.122468},
-  url = {https://www.sciencedirect.com/science/article/pii/S0957417423029706}
+  doi = {https://doi.org/10.1016/j.eswa.2023.122468},
+  url = {https://www.sciencedirect.com/science/article/pii/S0957417423029706},
+  author = {Ruijun Feng and Mingzhou Chen and Yaqi Song},
+  keywords = {Traffic flow prediction, 3D convolution, Convolutional neural network, Channel attention mechanism, Pointwise convolution, Multi-channel data structure},
+  abstract = {In the construction of intelligent transportation systems, short-term traffic flow prediction is of great significance for the advancement of traffic network management. But due to the presence of many complex factors in both spatial and temporal domains, it remains a complex and challenging task. Existing literature usually employs the convolutional neural network (CNN)-based methods in capturing spatiotemporal correlations. These CNN-based methods often use a single-channel data structure to represent different periodic patterns, which makes the model susceptible to over-parameterization when capturing periodic dependencies and prone to information loss after convolution. To overcome these limitations, this paper presents a hybrid deep learning method for short-term traffic flow prediction. In this method, a video-shaped multi-channel data structure is designed to represent different periodic patterns more efficiently. Next, a new mixed-pointwise convolution is introduced for capturing periodic dependencies without the negative impacts mentioned above. Lastly, an improved channel attention mechanism is proposed to learn channel inter-dependencies with controllable parameter usage. The proposed method is lightweight, yet highly effective. Compared to the state-of-the-art baseline method, it reduces the root mean squared error by up to 6.7% on the PeMSD4 dataset and 13.3% on the PeMSD7 dataset, while also achieving substantial improvement in two additional metrics, exhibiting strong robustness and great scalability across various settings.}
 }
 
